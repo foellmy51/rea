@@ -129,7 +129,11 @@ export const resolveHopperMachOImage = async (
       const identityError = validateFatSlice(slice, size, tableEnd, identity);
       if (identityError !== null) return invalid(identityError);
       ranges.push(slice);
-      if (slice.cpuType === cpuTypes[target.architecture]) matches.push(slice);
+      if (
+        target.architecture !== "m68k" &&
+        slice.cpuType === cpuTypes[target.architecture]
+      )
+        matches.push(slice);
     }
     ranges.sort((a, b) => a.offset - b.offset);
     for (let index = 1; index < ranges.length; index++) {

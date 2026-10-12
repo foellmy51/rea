@@ -12,6 +12,7 @@ import {
   type BinaryTarget,
   type ElfMetadataArchitecture,
   type HeaderArchitecture,
+  type RawOnlyArchitecture,
 } from "../domain/binaryTargetTypes.js";
 import {
   AnalysisCancelledError,
@@ -105,11 +106,12 @@ export const resolveHopperAnalysisProfile = async (
 
 /** Ghidra owns these lanes; Hopper names the family it declines rather than guessing. */
 const HOPPER_DECLINED_ARCHITECTURE_LABELS: Record<
-  ElfMetadataArchitecture,
+  ElfMetadataArchitecture | RawOnlyArchitecture,
   string
 > = {
   mips: "MIPS",
   riscv: "RISC-V",
+  m68k: "Motorola 68000",
 };
 
 /** Derive Hopper's complete non-interactive CLI loader selection. */
@@ -124,7 +126,7 @@ export const hopperLoaderArgsForTarget = (
   if (target.kind !== "executable")
     return err(new ProviderAdapterError("hopper", "resolve_analysis_profile"));
   const architecture = target.architecture;
-  if (isElfMetadataArchitecture(architecture))
+  if (isElfMetadataArchitecture(architecture) || architecture === "m68k")
     return err(
       new AnalysisCapabilityUnavailableError(
         "hopper",

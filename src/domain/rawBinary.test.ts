@@ -106,6 +106,45 @@ describe("raw-binary admission", () => {
       }
     },
   );
+  it("admits 2-byte aligned m68k entries and rejects odd ones", () => {
+    expect(
+      admitRawBinary({
+        architecture: "m68k",
+        entryPoint: "0x400",
+        fileBytes: 0x1000,
+      }),
+    ).toEqual({
+      ok: true,
+      value: {
+        architecture: "m68k",
+        entryPoint: "0x400",
+        entryPointSource: "0x400",
+      },
+    });
+    expect(
+      admitRawBinary({
+        architecture: "m68k",
+        entryPoint: "0x401",
+        fileBytes: 4,
+      }),
+    ).toEqual({
+      ok: false,
+      error: {
+        reason: "raw-binary m68k entry_point 0x401 must be 2-byte aligned",
+        constraint: "load_selection_rejected",
+      },
+    });
+  });
+  it("bounds an m68k mapping to the 32-bit address width", () => {
+    const result = admitRawBinary({
+      architecture: "m68k",
+      entryPoint: "0xfffffffc",
+      fileBytes: 8,
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected overflow rejection");
+    expect(result.error.reason).toContain("m68k address width");
+  });
   it.each([
     ["malformed entry", { architecture: "arm", entryPoint: "0xgg" }],
     ["missing entry", { architecture: "arm", entryPoint: undefined }],
