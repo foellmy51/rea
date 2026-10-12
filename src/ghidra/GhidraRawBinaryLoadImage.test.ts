@@ -22,6 +22,10 @@ describe("raw-binary Ghidra language binding", () => {
       languageId: "AARCH64:LE:64:v8A",
       compilerSpecId: "default",
     });
+    expect(ghidraRawBinaryLanguage("m68k")).toEqual({
+      languageId: "68000:BE:32:default",
+      compilerSpecId: "default",
+    });
   });
 });
 

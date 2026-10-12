@@ -1,4 +1,4 @@
-import type { HeaderArchitecture } from "../domain/binaryTargetTypes.js";
+import type { RawBinaryArchitecture } from "../domain/binaryTargetTypes.js";
 
 /** Bound Ghidra language for a caller-supplied raw-binary architecture. */
 export interface GhidraRawBinaryLanguage {
@@ -7,13 +7,14 @@ export interface GhidraRawBinaryLanguage {
 }
 
 /**
- * Map the four caller-visible CPU families to little-endian generic Ghidra
- * languages with a supported generic compiler specification. These are
- * analysis conventions, not evidence of the target's original compiler.
- * Big-endian, Thumb-only, and Cortex-M variants are out of scope.
+ * Map the caller-visible CPU families to generic Ghidra languages with a
+ * supported generic compiler specification. These are analysis conventions,
+ * not evidence of the target's original compiler. The x86 and ARM families
+ * are little-endian; m68k is the big-endian 68000 language. Thumb-only and
+ * Cortex-M variants are out of scope.
  */
 export const ghidraRawBinaryLanguage = (
-  architecture: HeaderArchitecture,
+  architecture: RawBinaryArchitecture,
 ): GhidraRawBinaryLanguage => {
   switch (architecture) {
     case "x86":
@@ -24,5 +25,7 @@ export const ghidraRawBinaryLanguage = (
       return { languageId: "ARM:LE:32:v7", compilerSpecId: "default" };
     case "arm64":
       return { languageId: "AARCH64:LE:64:v8A", compilerSpecId: "default" };
+    case "m68k":
+      return { languageId: "68000:BE:32:default", compilerSpecId: "default" };
   }
 };

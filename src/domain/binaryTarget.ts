@@ -1,5 +1,6 @@
 import type {
   BinaryArchitecture,
+  RawOnlyArchitecture,
   ElfFamilyMetadata,
   HeaderArchitecture,
   MipsElfMetadata,
@@ -352,7 +353,9 @@ const machArchitecture = (cpu: number): HeaderArchitecture | undefined => {
   return undefined;
 };
 
-const elfArchitecture = (machine: number): BinaryArchitecture | undefined => {
+const elfArchitecture = (
+  machine: number,
+): Exclude<BinaryArchitecture, RawOnlyArchitecture> | undefined => {
   switch (machine) {
     case 3:
       return "x86";

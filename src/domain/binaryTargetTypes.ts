@@ -6,6 +6,7 @@ export const BINARY_ARCHITECTURES = [
   "arm64",
   "mips",
   "riscv",
+  "m68k",
 ] as const;
 export type BinaryArchitecture = (typeof BINARY_ARCHITECTURES)[number];
 
@@ -35,11 +36,20 @@ export const isElfMetadataArchitecture = (
 ): architecture is ElfMetadataArchitecture =>
   (ELF_METADATA_ARCHITECTURES as readonly string[]).includes(architecture);
 
+/** Families admitted only for a caller-described headerless raw binary. */
+export const RAW_ONLY_ARCHITECTURES = [
+  "m68k",
+] as const satisfies readonly BinaryArchitecture[];
+export type RawOnlyArchitecture = (typeof RAW_ONLY_ARCHITECTURES)[number];
+
 /** Recognized family with no ELF metadata member; the header alone is the fact. */
 export type HeaderArchitecture = Exclude<
   BinaryArchitecture,
-  ElfMetadataArchitecture
+  ElfMetadataArchitecture | RawOnlyArchitecture
 >;
+
+/** Families a caller may select for a headerless raw-binary load. */
+export type RawBinaryArchitecture = HeaderArchitecture | RawOnlyArchitecture;
 
 /** Raw ELF facts; family recognition does not establish ISA or ABI support. */
 export interface MipsElfMetadata extends ElfFamilyMetadata {
@@ -142,8 +152,11 @@ export type BinaryTarget =
       readonly executableRole?: never;
       readonly managed?: never;
     })
-  | (ExecutableTarget & {
+  | (BinaryTargetIdentity & {
+      readonly kind: "executable";
       readonly format: "raw-binary";
+      readonly architecture: RawBinaryArchitecture;
+      readonly availableArchitectures: readonly RawBinaryArchitecture[];
       readonly entryPoint: string;
       readonly entryPointSource: string;
       readonly executableRole?: never;

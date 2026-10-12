@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type {
   BinaryArchitecture,
-  HeaderArchitecture,
+  RawBinaryArchitecture,
 } from "./binaryTargetTypes.js";
 import type { ExecutableFormatHint } from "./dosCom.js";
 import { err, ok, type Result } from "./result.js";
@@ -13,6 +13,7 @@ export const BINARY_ARCHITECTURES = [
   "x86_64",
   "arm",
   "arm64",
+  "m68k",
 ] as const satisfies readonly BinaryArchitecture[];
 
 /** Provider-neutral CPU family for a caller-supplied raw-binary load. */
@@ -58,7 +59,7 @@ export const validateRawBinaryLength = (
 
 /** Admitted headerless load identity used by target resolution and profiles. */
 export interface RawBinaryAdmission {
-  readonly architecture: HeaderArchitecture;
+  readonly architecture: RawBinaryArchitecture;
   readonly entryPoint: string;
   readonly entryPointSource: string;
 }
@@ -74,7 +75,7 @@ export interface RawBinaryAdmissionRejection {
 }
 
 const addressWidth = (architecture: BinaryArchitecture): bigint =>
-  architecture === "x86" || architecture === "arm"
+  architecture === "x86" || architecture === "arm" || architecture === "m68k"
     ? 0xffffffffn
     : 0xffffffffffffffffn;
 
@@ -88,7 +89,7 @@ export const admitRawBinary = (input: {
   if (!architecture.success)
     return err({
       reason:
-        "raw-binary format requires architecture (x86, x86_64, arm, or arm64)",
+        "raw-binary format requires architecture (x86, x86_64, arm, arm64, or m68k)",
       constraint: "load_selection_rejected",
     });
   if (typeof input.entryPoint !== "string")
@@ -109,6 +110,11 @@ export const admitRawBinary = (input: {
   )
     return err({
       reason: `raw-binary ${architecture.data} entry_point ${entry.value.canonical} must be 4-byte aligned`,
+      constraint: "load_selection_rejected",
+    });
+  if (architecture.data === "m68k" && entry.value.value % 2n !== 0n)
+    return err({
+      reason: `raw-binary m68k entry_point ${entry.value.canonical} must be 2-byte aligned`,
       constraint: "load_selection_rejected",
     });
   const length = validateRawBinaryLength(input.fileBytes);

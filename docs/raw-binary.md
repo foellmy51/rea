@@ -25,10 +25,10 @@ rea inspect-native-load-image /absolute/path/to/ecu.bin --target-format raw-bina
 }
 ```
 
-`architecture` is one of `x86`, `x86_64`, `arm`, or `arm64`. `entry_point` is a
+`architecture` is one of `x86`, `x86_64`, `arm`, `arm64`, or `m68k`. `entry_point` is a
 hexadecimal address of the form `0x…`. The complete file is mapped starting at
 that address, and Ghidra seeds an `entry` function there before auto-analysis.
-ARM and AArch64 entries must be 4-byte aligned; x86 entries may be byte-aligned.
+ARM and AArch64 entries must be 4-byte aligned; m68k entries must be 2-byte aligned; x86 entries may be byte-aligned.
 `open_binary` and an open `binary_session` return the canonical `entry_point`
 for raw targets so callers can verify the selected mapping directly.
 Omitted `format` keeps header-based detection; architecture and entry without
@@ -47,6 +47,11 @@ generic languages and compiler specifications:
 Compiler specifications select analysis conventions; they do not identify the
 original compiler or ABI of a headerless target. Ghidra's x86 languages do not
 provide a compiler specification named `default`.
+
+`m68k` is the big-endian Motorola 68000 language with a 32-bit address width.
+A ROM that starts with a vector table (initial SP, reset PC) is not code at
+file offset 0: REA seeds an `entry` function at the mapped start, so map the
+image at its code start or review the first function as table data.
 
 Those settings, the caller-supplied entry, and `language_selection:
 caller-supplied-v1` are committed in the analysis profile. A different entry
@@ -67,7 +72,7 @@ PE applications only.
 
 - Headers are not discovered from file bytes. This increment does not guess
   load addresses, vector tables, or memory maps.
-- Big-endian, Thumb-only, Cortex-M, and other Ghidra processor variants are
+- Other big-endian variants (m68k is the only big-endian family), Thumb-only, Cortex-M, and other Ghidra processor variants are
   unsupported.
 - Reset vectors, memory-mapped I/O, and firmware boot sequences are not
   emulated.
